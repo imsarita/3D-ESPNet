@@ -1,31 +1,43 @@
-# Temporarily dumping not so useful functions here
+#============================================
+__author__ = "Sachin Mehta"
+__license__ = "MIT"
+__maintainer__ = "Sachin Mehta"
+#============================================
 
-# def extract_features(test_dataset):
-#     if(isinstance(test_data ,torch.utils.data.DataLoader)):
-#         test_loader = train_data
-#     else:
-#         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE)
-#
-#     test_features = np.zeros((len(test_dataset), self.hidden_units))
-#     test_labels = np.zeros(len(test_dataset))
-#
-#     for i, (batch, labels) in enumerate(test_loader):
-#         batch = batch.view(len(batch), self.visible_units)  # flatten input data
-#
-#         if self.use_gpu:
-#             batch = batch.cuda()
-#
-#         test_features[i*BATCH_SIZE:i*BATCH_SIZE+len(batch)] = self.to_hidden(batch).cpu().numpy()
-#         test_labels[i*BATCH_SIZE:i*BATCH_SIZE+len(batch)] = labels.numpy()
-#
-#     return test_features,test_labels
+import numpy as np
+
+def cropVolume(img, data=False):
+    '''
+    Helper function to remove the redundant black area from the 3D volume
+    :param img: 3D volume
+    :param data: Nib allows you to access 3D volume data using the get_data(). If you have already used it before
+    calling this function, then it is false
+    :return: returns the crop positions acrss 3 axes (channel, width and height)
+    '''
+    if not data:
+       img = img.get_data()
+    sum_array = []
 
 
-# def free_energy(self,v):
-#     '''
-#     Does caculation of free energy
-#     '''
-#     v_bias = v.mv(self.b)
-#     wx_b = torch.clamp(F.liinear(v,self.W,self.c),-80,80)
-#     hidden_term  = wx_b.exp().add(1).log().sum(1)
-#     return(-hidden_term - v_bias).mean()
+    for ch in range(img.shape[2]):
+        values, indexes = np.where(img[:, :, ch] > 0)
+        sum_val = sum(values)
+        sum_array.append(sum_val)
+    ch_s = np.nonzero(sum_array)[0][0]
+    ch_e = np.nonzero(sum_array)[0][-1]
+    sum_array = []
+    for width in range(img.shape[0]):
+        values, indexes = np.where(img[width, :, :] > 0)
+        sum_val = sum(values)
+        sum_array.append(sum_val)
+    wi_s = np.nonzero(sum_array)[0][0]
+    wi_e = np.nonzero(sum_array)[0][-1]
+    sum_array = []
+    for width in range(img.shape[1]):
+        values, indexes = np.where(img[:, width, :] > 0)
+        sum_val = sum(values)
+        sum_array.append(sum_val)
+    hi_s = np.nonzero(sum_array)[0][0]
+    hi_e = np.nonzero(sum_array)[0][-1]
+
+    return ch_s, ch_e, wi_s, wi_e, hi_s, hi_e
